@@ -115,26 +115,40 @@ class ScaReportUtility {
 	}
 
 	public static void main(final String[] args) {
-
 		// Prepare userDirectory and tempDirectoryPrefix
 		final String currentDirectory = System.getProperty("user.dir");
-		final String userDirectory = currentDirectory.replace('\\', '/') + '/';
+		final String userDirectory = currentDirectory.replace('\\', File.separatorChar) + File.separator;
 		final String timeStamp = Integer.toHexString((int) System.nanoTime());
 		final String tempDirectory = System.getProperty("java.io.tmpdir");
-		final String tempDirectoryPrefix = tempDirectory.replace('\\', '/') + timeStamp;
+		final String tempDirectoryPrefix = tempDirectory.replace('\\', File.separatorChar) + File.separator + timeStamp;
+
+		final String sourceDirectory;
+		if (null != args && args.length > 0 && null != args[0]) {
+			sourceDirectory = args[0] + File.separator;
+		} else {
+			sourceDirectory = userDirectory;
+		}
+
+		final String dstDirectory;
+		if (null != args && args.length > 1 && null != args[1]) {
+			dstDirectory = args[1] + File.separator;
+		} else {
+			dstDirectory = userDirectory;
+		}
+
 
 		// 1. Create intermediate xml-file for Findbugs
-		final String inputFileFindbugs = userDirectory + "findbugs.xml";
+		final String inputFileFindbugs = sourceDirectory + "findbugs" + File.separator + "findbugs.xml";
 		final String findbugsTempFile = tempDirectoryPrefix + "_PostFB.xml";
 		run("prepare_findbugs.xslt", inputFileFindbugs, findbugsTempFile, EMPTY, EMPTY);
 
 		// 2. Create intermediate xml-file for Checkstyle
-		final String inputFileCheckstyle = userDirectory + "checkstyle.xml";
+		final String inputFileCheckstyle = sourceDirectory + "checkstyle" + File.separator + "checkstyle.xml";
 		final String checkstyleTempFile = tempDirectoryPrefix + "_PostCS.xml";
 		run("prepare_checkstyle.xslt", inputFileCheckstyle, checkstyleTempFile, EMPTY, EMPTY);
 
 		// 3. Create intermediate xml-file for PMD
-		final String inputFilePMD = userDirectory + "pmd.xml";
+		final String inputFilePMD = sourceDirectory + "pmd" + File.separator + "pmd.xml";
 		final String pmdTempFile = tempDirectoryPrefix + "_PostPM.xml";
 		run("prepare_pmd.xslt", inputFilePMD, pmdTempFile, EMPTY, EMPTY);
 
@@ -148,7 +162,7 @@ class ScaReportUtility {
 		run("merge.xslt", firstMergeResult, secondMergeResult, "with", pmdTempFile);
 
 		// 6. Create html report out of secondMergeResult
-		final String htmlOutputFileName = userDirectory + "result.html";
+		final String htmlOutputFileName = dstDirectory + "result.html";
 		run("create_html.xslt", secondMergeResult, htmlOutputFileName, EMPTY, EMPTY);
 
 		// Delete all temporary files
